@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {"exam_number": 36, "file": "topik_36.pdf", "reading_pages": [20, 40], "extraction": "auto"},
+    {"exam_number": 37, "file": "topik_37.pdf", "reading_pages": [20, 40], "extraction": "auto"},
+    {"exam_number": 41, "file": "topik_41.pdf", "reading_pages": [3, 23], "extraction": "auto"},
+    {"exam_number": 47, "file": "topik_47.pdf", "reading_pages": [24, 44], "extraction": "auto"},
+    {"exam_number": 52, "file": "topik_52.pdf", "reading_pages": [24, 44], "extraction": "auto"},
+    {"exam_number": 60, "file": "topik_60.pdf", "reading_pages": [5, 25], "extraction": "auto"},
+    {"exam_number": 64, "file": "topik_64.pdf", "reading_pages": [5, 25], "extraction": "auto"}
+  ]
+}

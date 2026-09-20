@@ -1,0 +1,53 @@
+{
+  "slug": "korean-grammar-rag",
+  "title": "Korean Grammar RAG",
+  "shortSummary": "A Korean grammar assistant grounded in dictionary records, with TOPIK retrieval and original-PDF question previews.",
+  "status": "Complete personal prototype",
+  "category": "AI / Machine Learning",
+  "tags": [
+    "RAG",
+    "Korean NLP",
+    "FastAPI",
+    "Chroma",
+    "LangChain",
+    "PyMuPDF",
+    "EasyOCR"
+  ],
+  "overview": "I built this project to explore source-grounded Korean grammar retrieval. Korean Basic Dictionary records provide grammar definitions and examples, while TOPIK reading papers provide separate authentic exam evidence.",
+  "objectives": [
+    "Answer exact and open-ended Korean grammar questions from an attributed dictionary source.",
+    "Support Korean and English retrieval with multilingual embeddings.",
+    "Keep TOPIK evidence separate from grammar authority and show it through original-PDF previews.",
+    "Handle native and scanned TOPIK papers with a reproducible ingestion pipeline."
+  ],
+  "contribution": [
+    "Implemented deterministic exact lookup, semantic retrieval, grounding checks, and grammar-family diversification.",
+    "Built question-level TOPIK parsing with shared-passage preservation and conservative missing-anchor handling.",
+    "Added automatic native-text or EasyOCR extraction and lazy multi-crop PDF previews.",
+    "Created validation for question coverage, shared contexts, crop geometry, and representative retrieval behavior."
+  ],
+  "architecture": [
+    "FastAPI serves a plain HTML and JavaScript interface.",
+    "Korean Basic Dictionary and TOPIK documents use separate Chroma collections with multilingual-e5-small embeddings.",
+    "Explicit grammar forms use exact or lexical retrieval; open-ended function and topic searches use semantic retrieval.",
+    "PyMuPDF and EasyOCR feed a structural TOPIK parser that writes retrieval units and original-PDF crop metadata."
+  ],
+  "technicalStack": [
+    "Python",
+    "FastAPI",
+    "LangChain",
+    "OpenAI API",
+    "Chroma",
+    "multilingual-e5-small",
+    "PyMuPDF",
+    "EasyOCR",
+    "HTML / JavaScript"
+  ],
+  "challenges": [
+    "Separating dictionary authority from exam evidence so TOPIK text cannot become an unsupported grammar explanation.",
+    "Recovering individual questions and shared passages from PDFs with inconsistent native text and OCR anchors.",
+    "Keeping previews local to one question while retaining required shared stimuli and graphics."
+  ],
+  "outcome": "The prototype supports exact and semantic grammar retrieval, TOPIK lexical and topic search, and lazy question previews. Its TOPIK pipeline was developed with seven exams and checked on four additional held-out exams, with low-confidence OCR cases left visible for manual review.",
+  "published": true
+}

@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Korean Grammar Assistant</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: #f6f7f9;
+            color: #202124;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            line-height: 1.6;
+        }
+        .container { width: min(1000px, 92%); margin: 0 auto; padding: 48px 0 80px; }
+        header { margin-bottom: 34px; }
+        h1 { margin: 0 0 8px; font-size: clamp(30px, 5vw, 44px); letter-spacing: -1px; }
+        .subtitle { margin: 0; color: #666; font-size: 16px; }
+        .search-panel, .answer, .card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 14px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, .03);
+        }
+        .search-panel { padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, .04); }
+        textarea {
+            width: 100%;
+            min-height: 105px;
+            resize: vertical;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 14px;
+            font: inherit;
+            font-size: 16px;
+        }
+        textarea:focus { outline: none; border-color: #555; }
+        .controls { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 14px; }
+        .checkbox { display: flex; gap: 8px; align-items: center; color: #555; font-size: 14px; }
+        button {
+            border: 0;
+            border-radius: 9px;
+            padding: 11px 22px;
+            background: #202124;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:hover { opacity: .9; }
+        button:disabled { opacity: .5; cursor: default; }
+        #askButton.loading { min-width: 145px; }
+        #askButton .loading-dots { display: inline-block; width: 1.5em; text-align: left; }
+        .section { margin-top: 38px; }
+        .section-title { margin: 0 0 14px; font-size: 20px; letter-spacing: -.3px; }
+        .answer { padding: 24px; }
+        .answer h1, .answer h2, .answer h3 { margin-top: 24px; }
+        .answer h1:first-child, .answer h2:first-child, .answer h3:first-child { margin-top: 0; }
+        .answer blockquote { margin-left: 0; padding-left: 16px; border-left: 4px solid #ddd; color: #555; }
+        .card-grid { display: grid; gap: 16px; }
+        .card { padding: 20px; }
+        .grammar-title { margin: 0 0 8px; font-size: 23px; font-weight: 700; }
+        .metadata { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 4px 9px;
+            background: #f0f1f3;
+            color: #555;
+            font-size: 12px;
+        }
+        .chip.topik { background: #e8eefc; color: #334e91; }
+        .chip.lexical { background: #eaf6ee; color: #29623c; }
+        .chip.semantic { background: #fff1da; color: #825b1d; }
+        .field { margin-top: 14px; }
+        .field-label { margin-bottom: 4px; color: #777; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+        .examples { padding-left: 20px; margin: 7px 0 0; }
+        .examples li { margin-bottom: 7px; }
+        .topik-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+        .topik-title { margin: 0; font-size: 19px; font-weight: 700; }
+        .topik-preview-wrapper {
+            margin-top: 18px;
+            overflow: hidden;
+            background: #fafafa;
+            border: 1px solid #e3e3e3;
+            border-radius: 12px;
+        }
+        .topik-preview { display: block; width: 100%; height: auto; margin: 0 auto; background: white; }
+        .topik-preview-status { padding: 28px; text-align: center; color: #777; font-size: 13px; }
+        .topik-preview-error { padding: 18px; background: #fff4f4; color: #8b2929; font-size: 13px; }
+        .topik-details { margin-top: 14px; border-top: 1px solid #eee; padding-top: 12px; }
+        .topik-details summary { display: inline-block; color: #666; font-size: 13px; font-weight: 600; cursor: pointer; user-select: none; }
+        .topik-details summary:hover { color: #202124; }
+        .topik-text {
+            margin-top: 12px;
+            padding: 15px;
+            background: #f7f7f8;
+            border-radius: 9px;
+            white-space: pre-wrap;
+            word-break: keep-all;
+            font-family: "Noto Sans KR", "Malgun Gothic", sans-serif;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #555;
+        }
+        .topik-source { margin-top: 14px; color: #777; font-size: 12px; }
+        .source-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .source-chip { border: 1px solid #ddd; border-radius: 999px; padding: 6px 11px; background: white; color: #555; font-size: 12px; }
+        .error { margin-top: 18px; background: #fff0f0; border: 1px solid #efb8b8; color: #8b2929; border-radius: 10px; padding: 14px; }
+        .hidden { display: none; }
+        @media (max-width: 650px) {
+            .container { padding-top: 28px; }
+            .controls { align-items: stretch; flex-direction: column; }
+            button { width: 100%; }
+            .topik-header { flex-direction: column; }
+            .topik-preview-wrapper { border-radius: 8px; }
+        }
+    </style>
+</head>
+<body>
+<main class="container">
+    <header>
+        <h1>Korean Grammar Assistant</h1>
+        <p class="subtitle">Look up Korean grammar with definitions from the Korean Basic Dictionary and find related TOPIK questions.</p>
+    </header>
+
+    <div class="search-panel">
+        <textarea id="question" placeholder="Ask a Korean grammar question...
+
+Examples:
+What does -는 반면에 mean?
+Explain -는 반면에 and show me TOPIK occurrences.
+Find TOPIK questions about environmental pollution."></textarea>
+        <div class="controls">
+            <label class="checkbox"><input id="explain" type="checkbox" checked> Generate explanation</label>
+            <button id="askButton">Ask</button>
+        </div>
+    </div>
+
+    <div id="error" class="error hidden" role="alert"></div>
+
+    <section id="answerSection" class="section hidden">
+        <h2 class="section-title">Answer</h2>
+        <div id="answer" class="answer"></div>
+    </section>
+    <section id="dictionarySection" class="section hidden">
+        <h2 class="section-title">Dictionary Evidence</h2>
+        <div id="dictionaryEntries" class="card-grid"></div>
+    </section>
+    <section id="topikSection" class="section hidden">
+        <h2 class="section-title">TOPIK Occurrences</h2>
+        <div id="topikEntries" class="card-grid"></div>
+    </section>
+    <section id="sourcesSection" class="section hidden">
+        <h2 class="section-title">Sources</h2>
+        <div id="sources" class="source-list"></div>
+    </section>
+</main>
+
+<script>
+    const byId = id => document.getElementById(id);
+    const questionInput = byId("question");
+    const explainInput = byId("explain");
+    const askButton = byId("askButton");
+    const errorBox = byId("error");
+    const answerSection = byId("answerSection");
+    const answerContainer = byId("answer");
+    const dictionarySection = byId("dictionarySection");
+    const dictionaryEntries = byId("dictionaryEntries");
+    const topikSection = byId("topikSection");
+    const topikEntries = byId("topikEntries");
+    const sourcesSection = byId("sourcesSection");
+    const sourcesContainer = byId("sources");
+    let isLoading = false;
+    let loadingTimer = null;
+
+    function escapeHtml(value) {
+        const element = document.createElement("div");
+        element.textContent = value ?? "";
+        return element.innerHTML;
+    }
+
+    function resetResults() {
+        for (const section of [errorBox, answerSection, dictionarySection, topikSection, sourcesSection]) {
+            section.classList.add("hidden");
+        }
+        answerContainer.innerHTML = "";
+        dictionaryEntries.innerHTML = "";
+        topikEntries.innerHTML = "";
+        sourcesContainer.innerHTML = "";
+    }
+
+    function renderMarkdown(text) {
+        return text ? DOMPurify.sanitize(marked.parse(text)) : "";
+    }
+
+    function renderDictionaryEntry(entry) {
+        const card = document.createElement("div");
+        card.className = "card";
+        const examples = Array.isArray(entry.examples)
+            ? entry.examples.filter(item => item?.trim() && item.trim() !== ".")
+            : [];
+        const related = Array.isArray(entry.related) ? entry.related : [];
+        const chip = value => value ? `<span class="chip">${escapeHtml(value)}</span>` : "";
+        const field = (label, value) => value ? `
+            <div class="field"><div class="field-label">${label}</div><div>${escapeHtml(value)}</div></div>` : "";
+
+        card.innerHTML = `
+            <h3 class="grammar-title">${escapeHtml(entry.grammar)}</h3>
+            <div class="metadata">${chip(entry.part_of_speech)}${chip(entry.retrieval_type)}</div>
+            ${field("English definition", entry.definition_en)}
+            ${field("Korean definition", entry.definition_ko)}
+            ${field("Usage", entry.usage)}
+            ${examples.length ? `
+                <div class="field"><div class="field-label">Dictionary examples</div>
+                <ul class="examples">${examples.map(example => `<li>${escapeHtml(example)}</li>`).join("")}</ul></div>` : ""}
+            ${related.length ? `
+                <div class="field"><div class="field-label">Related grammar</div>
+                <div class="metadata">${related.map(item =>
+                    `<span class="chip">${escapeHtml(item.grammar)}${item.type ? ` · ${escapeHtml(item.type)}` : ""}</span>`
+                ).join("")}</div></div>` : ""}
+            ${field("Source", entry.source || "Korean Basic Dictionary")}`;
+        dictionaryEntries.appendChild(card);
+    }
+
+    function formatQuestionLabel(item) {
+        return item.question_start === item.question_end
+            ? `Question ${item.question_start}`
+            : `Questions ${item.question_start}–${item.question_end}`;
+    }
+
+    function createTopikPreview(item) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "topik-preview-wrapper";
+        if (!item.preview_url) {
+            wrapper.innerHTML = '<div class="topik-preview-error">Original PDF preview is unavailable.</div>';
+            return wrapper;
+        }
+
+        const loading = document.createElement("div");
+        loading.className = "topik-preview-status";
+        loading.textContent = "Loading original TOPIK question...";
+        wrapper.appendChild(loading);
+
+        const previewUrls = Array.isArray(item.preview_urls) && item.preview_urls.length
+            ? item.preview_urls
+            : [item.preview_url];
+        previewUrls.forEach((previewUrl, cropIndex) => {
+            const image = document.createElement("img");
+            image.className = "topik-preview";
+            image.alt = `TOPIK ${item.exam_number}, ${formatQuestionLabel(item)}, crop ${cropIndex + 1}`;
+            image.style.opacity = "0";
+            image.style.transition = "opacity .15s ease";
+            image.addEventListener("load", () => {
+                loading.remove();
+                image.style.opacity = "1";
+            });
+            image.addEventListener("error", () => {
+                loading.remove();
+                image.remove();
+                const error = document.createElement("div");
+                error.className = "topik-preview-error";
+                error.textContent = "Could not render part of the original TOPIK PDF preview.";
+                wrapper.appendChild(error);
+            });
+            // Attach listeners before assigning src so cached responses are handled.
+            image.src = previewUrl;
+            wrapper.appendChild(image);
+        });
+        return wrapper;
+    }
+
+    function renderTopikEntry(item) {
+        const card = document.createElement("div");
+        card.className = "card";
+        const retrievalType = item.retrieval_type || "";
+        const retrievalClass = retrievalType === "lexical" ? "lexical" : "semantic";
+        card.innerHTML = `
+            <div class="topik-header"><div>
+                <h3 class="topik-title">TOPIK ${escapeHtml(item.exam_number)} · ${escapeHtml(formatQuestionLabel(item))}</h3>
+                <div class="metadata">
+                    <span class="chip topik">Reading</span>
+                    ${retrievalType ? `<span class="chip ${retrievalClass}">${escapeHtml(retrievalType)}</span>` : ""}
+                    ${item.grammar_query ? `<span class="chip">Match: ${escapeHtml(item.grammar_query)}</span>` : ""}
+                    ${item.chunk_type === "shared_passage_questions" ? '<span class="chip">Shared passage</span>' : ""}
+                </div>
+            </div></div>`;
+        card.appendChild(createTopikPreview(item));
+
+        if (item.text?.trim()) {
+            const details = document.createElement("details");
+            details.className = "topik-details";
+            const summary = document.createElement("summary");
+            summary.textContent = "Show extracted text";
+            const text = document.createElement("div");
+            text.className = "topik-text";
+            text.textContent = item.text;
+            details.append(summary, text);
+            card.appendChild(details);
+        }
+        if (item.source_file) {
+            const source = document.createElement("div");
+            source.className = "topik-source";
+            source.textContent = `Source: ${item.source_file}`;
+            card.appendChild(source);
+        }
+        topikEntries.appendChild(card);
+    }
+
+    function renderSources(sources) {
+        const labels = new Set();
+        for (const source of sources) {
+            let label;
+            if (source.source_type === "dictionary") {
+                label = `Korean Basic Dictionary${source.grammar ? ` · ${source.grammar}` : ""}`;
+            } else if (source.source_type === "topik") {
+                label = `TOPIK ${source.exam_number} · ${formatQuestionLabel(source)}`;
+            } else {
+                label = source.name || "Source";
+            }
+            if (labels.has(label)) continue;
+            labels.add(label);
+            const element = document.createElement("span");
+            element.className = "source-chip";
+            element.textContent = label;
+            sourcesContainer.appendChild(element);
+        }
+    }
+
+    function renderResponse(data) {
+        resetResults();
+        if (data.explanation) {
+            answerContainer.innerHTML = renderMarkdown(data.explanation);
+            answerSection.classList.remove("hidden");
+        }
+        if (data.entries?.length) {
+            data.entries.forEach(renderDictionaryEntry);
+            dictionarySection.classList.remove("hidden");
+        }
+        if (data.topik_occurrences?.length) {
+            data.topik_occurrences.forEach(renderTopikEntry);
+            topikSection.classList.remove("hidden");
+        } else if (data.topik_message) {
+            const message = document.createElement("div");
+            message.className = "card";
+            message.textContent = data.topik_message;
+            topikEntries.appendChild(message);
+            topikSection.classList.remove("hidden");
+        }
+        if (data.sources?.length) {
+            renderSources(data.sources);
+            sourcesSection.classList.remove("hidden");
+        }
+    }
+
+    async function askQuestion() {
+        if (isLoading) return;
+
+        const question = questionInput.value.trim();
+        if (!question) return;
+
+        isLoading = true;
+        askButton.disabled = true;
+        askButton.classList.add("loading");
+        errorBox.classList.add("hidden");
+        const loadingLabels = [".", "..", "..."];
+        let loadingLabelIndex = 0;
+        askButton.innerHTML = 'Searching<span class="loading-dots">.</span>';
+        const loadingDots = askButton.querySelector(".loading-dots");
+        loadingTimer = window.setInterval(() => {
+            loadingLabelIndex = (loadingLabelIndex + 1) % loadingLabels.length;
+            loadingDots.textContent = loadingLabels[loadingLabelIndex];
+        }, 450);
+        try {
+            const response = await fetch("/ask", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({question, explain: explainInput.checked})
+            });
+            if (!response.ok) {
+                let message = `HTTP ${response.status}`;
+                try {
+                    const body = await response.json();
+                    message = body.detail || message;
+                } catch (_) {}
+                throw new Error(message);
+            }
+            renderResponse(await response.json());
+        } catch (error) {
+            console.error(error);
+            errorBox.textContent = `Request failed: ${error.message}`;
+            errorBox.classList.remove("hidden");
+        } finally {
+            window.clearInterval(loadingTimer);
+            loadingTimer = null;
+            isLoading = false;
+            askButton.disabled = false;
+            askButton.classList.remove("loading");
+            askButton.textContent = "Ask";
+        }
+    }
+
+    askButton.addEventListener("click", askQuestion);
+    questionInput.addEventListener("keydown", event => {
+        if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            askQuestion();
+        }
+    });
+</script>
+</body>
+</html>

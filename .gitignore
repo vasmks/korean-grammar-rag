@@ -1,0 +1,32 @@
+.env*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+*.log
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Downloaded source data and reproducible indexes stay local.
+data/raw/
+data/processed/
+data/topik/raw/
+data/topik/processed/
+data/topik/ocr_models/
+data/topik/validation*/
+data/chroma/
+data/chroma_topik/
+data/vectorstore/
+
+# Superseded/previews rendered during local debugging.
+static/topik/
