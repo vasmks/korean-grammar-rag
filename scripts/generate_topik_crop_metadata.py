@@ -38,9 +38,7 @@ GROUPS_FILE = Path(
 OCR_PAGE_LINES: dict[tuple[str, int], list[dict]] = {}
 
 
-# =========================================================
 # Crop configuration
-# =========================================================
 
 HORIZONTAL_PADDING = 16
 TOP_PADDING = 8
@@ -49,9 +47,7 @@ MIN_INFERRED_VERTICAL_GAP = 24
 MAX_VISUAL_CUT_INK_RATIO = 0.02
 
 
-# =========================================================
 # General helpers
-# =========================================================
 
 
 def make_key(
@@ -115,9 +111,7 @@ def compact_text(
     )
 
 
-# =========================================================
 # PDF text-line extraction
-# =========================================================
 
 
 def get_lines(
@@ -420,7 +414,7 @@ def infer_shared_visual_starts(
     scope: dict,
     doc,
 ) -> dict[int, tuple[int, float]]:
-    """Raster-verify structurally inferred shared-sibling edge starts."""
+    """Verify inferred starts for shared question groups against the rendered page."""
     if scope.get("structure_type") != "shared_context":
         return {}
 
@@ -434,7 +428,7 @@ def infer_shared_visual_starts(
         for number, anchor in anchors.items()
     }
     inferred_orders = infer_missing_question_starts(
-        scope, expected, anchors, confirmed_starts
+        scope, expected, confirmed_starts
     )
     blocks_by_order = {
         int(block["order"]): block
@@ -531,9 +525,7 @@ def compose_shared_visual_preview_regions(
     return context_regions + question_regions
 
 
-# =========================================================
 # Header / footer filtering
-# =========================================================
 
 
 def is_noise_line(
@@ -592,9 +584,7 @@ def get_meaningful_lines(
     ]
 
 
-# =========================================================
 # Question detection
-# =========================================================
 
 
 def question_pattern(
@@ -688,9 +678,7 @@ def find_group_start_line(
     return None
 
 
-# =========================================================
 # Retrieval-unit start
-# =========================================================
 
 
 def find_unit_start(
@@ -758,9 +746,7 @@ def find_unit_start(
     return None
 
 
-# =========================================================
 # End boundary
-# =========================================================
 
 
 def find_next_boundary(
@@ -812,9 +798,7 @@ def find_next_boundary(
     )
 
 
-# =========================================================
 # Crop coordinate calculation
-# =========================================================
 
 
 def get_crop_content_lines(
@@ -869,10 +853,8 @@ def calculate_bbox(
     if not lines:
         return None
 
-    # ----------------------------------------
     # Horizontal coordinates come from actual
     # question content.
-    # ----------------------------------------
 
     x0 = min(
         line["rect"].x0
@@ -884,9 +866,7 @@ def calculate_bbox(
         for line in lines
     )
 
-    # ----------------------------------------
     # Vertical coordinates.
-    # ----------------------------------------
 
     y0 = min(
         line["rect"].y0
@@ -957,7 +937,7 @@ def calculate_structural_bbox(
     start_y: float,
     end_y: float | None,
 ) -> list[float] | None:
-    """Turn a parser-owned vertical region into a page-wide PDF crop."""
+    """Convert a vertical page region into a page-wide PDF crop."""
     lines = get_crop_content_lines(page, start_y, end_y)
     if not lines:
         return None
@@ -1003,9 +983,7 @@ def generate_structural_metadata(doc, unit: dict) -> list[dict]:
     return crops
 
 
-# =========================================================
 # Metadata generation for one retrieval unit
-# =========================================================
 
 
 def generate_unit_metadata(
@@ -1058,9 +1036,7 @@ def generate_unit_metadata(
             page_number - 1
         ]
 
-        # ----------------------------------------
         # First page.
-        # ----------------------------------------
 
         if (
             page_number
@@ -1071,9 +1047,7 @@ def generate_unit_metadata(
                 start_y
             )
 
-        # ----------------------------------------
         # Possible continuation page.
-        # ----------------------------------------
 
         else:
 
@@ -1120,9 +1094,7 @@ def generate_unit_metadata(
                 ].y0
             )
 
-        # ----------------------------------------
         # Locate the next question / section.
-        # ----------------------------------------
 
         boundary = find_next_boundary(
             page,
@@ -1130,10 +1102,8 @@ def generate_unit_metadata(
             next_question,
         )
 
-        # ----------------------------------------
         # Calculate metadata only.
         # No PNG is created.
-        # ----------------------------------------
 
         bbox = calculate_bbox(
             page,
@@ -1169,9 +1139,7 @@ def generate_unit_metadata(
     return crops
 
 
-# =========================================================
 # Main
-# =========================================================
 
 
 def main():

@@ -144,7 +144,7 @@ def has_shared_context_instruction(instruction: str) -> bool:
 
 
 def classify_content(question_start: int, question_end: int, text: str) -> str:
-    """Retain the existing generic sparse/visual signal used by indexing."""
+    """Classify short visual or sparse question groups for indexing."""
     if question_start >= 5 and question_end <= 12:
         if len(re.findall(r"[가-힣]", text)) < 250:
             return "visual_or_sparse"

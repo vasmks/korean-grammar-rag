@@ -49,8 +49,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Korean Grammar RAG",
     description=(
-        "A grounded Korean grammar assistant using the Korean Basic Dictionary "
-        "and authentic TOPIK reading material."
+        "A Korean grammar assistant using the Korean Basic Dictionary "
+        "and TOPIK reading papers."
     ),
     version="0.4.0",
     lifespan=lifespan,

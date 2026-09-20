@@ -29,7 +29,7 @@ Grammar forms can also be searched across TOPIK reading papers. Matching questio
 ## What it does
 
 - Looks up a specific Korean grammar form.
-- Searches for grammar by function, such as cause, contrast, uncertainty, or intention.
+- Searches for grammar by meaning or communicative function, for example cause, contrast, uncertainty, or intention.
 - Accepts queries in Korean or English.
 - Uses multilingual embeddings for semantic search.
 - Searches TOPIK papers for literal grammar occurrences and related topics.
@@ -198,7 +198,7 @@ To add a new paper:
 python -m scripts.prepare_topik --exam 83 --file topik_83.pdf --reading-pages 5 25
 ```
 
-The default extraction mode is `auto`. It uses the native PDF text layer when it is usable and falls back to OCR otherwise.
+`extraction` controls how text is read from the PDF. `auto` uses the embedded text layer when it is usable and falls back to EasyOCR otherwise; `native` forces embedded PDF text, and `ocr` forces EasyOCR.
 
 If the reading section is on different pages in another PDF edition, use the page range from your local copy.
 
@@ -297,8 +297,7 @@ This is a regression check rather than a guarantee that every TOPIK PDF layout w
 
 - The embedding model takes some time to load on CPU.
 - Open-ended grammar explanations require an OpenAI API key.
-- Semantic retrieval thresholds are currently hand-set.
-- There is no labeled retrieval benchmark yet.
+- Semantic search thresholds were chosen manually; the project does not yet have a labeled retrieval benchmark.
 - TOPIK PDF layouts vary, so low-confidence OCR cases may require manual review.
 - Raw dictionary exports and TOPIK papers are not redistributed with the repository.
 
@@ -314,5 +313,4 @@ docs/demo/                 short application demo
 data/topik/sources.json    TOPIK source manifest
 data/README.md             local data setup
 DATA_NOTICE.md             source and redistribution notes
-project.json               portfolio metadata
 ```

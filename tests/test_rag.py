@@ -245,6 +245,9 @@ class ResultHelpersTests(TestCase):
         self.assertEqual(KoreanGrammarRAG._normalize_pages("9, 10,9"), [9, 10])
 
     def test_local_dictionary_contains_reference_form(self):
+        if not DATA_FILE.exists():
+            self.skipTest("Dictionary data has not been prepared.")
+
         with DATA_FILE.open(encoding="utf-8") as file:
             entries = json.load(file)
         matches = [entry for entry in entries if entry.get("grammar") == "-는 반면에"]

@@ -15,6 +15,10 @@ RENDER_SCALE = 2.0
 
 class TopikPreviewService:
     def __init__(self) -> None:
+        if not METADATA_FILE.exists():
+            self.metadata = {}
+            return
+
         with METADATA_FILE.open(encoding="utf-8") as file:
             self.metadata = json.load(file)
 

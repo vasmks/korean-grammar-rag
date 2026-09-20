@@ -100,7 +100,6 @@ def _select_gap_orders(
 def infer_missing_question_starts(
     scope: dict,
     expected: list[int],
-    anchors: dict[int, dict],
     confirmed_starts: dict[int, int],
 ) -> dict[int, int]:
     """Infer clearly separated missing runs, including shared-scope edges."""
@@ -232,7 +231,7 @@ def build_units(scopes: list[dict]) -> tuple[list[dict], list[dict]]:
             for number, anchor in anchors.items()
         }
         inferred_starts = infer_missing_question_starts(
-            scope, expected, anchors, confirmed_starts
+            scope, expected, confirmed_starts
         )
         question_starts = {**confirmed_starts, **inferred_starts}
         context_blocks = scope.get("shared_context_blocks") or []

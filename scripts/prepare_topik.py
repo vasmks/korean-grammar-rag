@@ -1,4 +1,4 @@
-"""Run the existing TOPIK ingestion pipeline from one command."""
+"""Run the TOPIK ingestion pipeline from one command."""
 
 from __future__ import annotations
 
