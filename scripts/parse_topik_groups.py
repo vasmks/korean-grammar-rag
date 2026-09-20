@@ -7,13 +7,15 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
+try:
+    from scripts.topik_ranges import parse_instruction_range
+except ModuleNotFoundError:  # Support direct script execution
+    from topik_ranges import parse_instruction_range
+
 
 INPUT_FILE = Path("data/topik/processed/topik_reading_pages.json")
 OUTPUT_FILE = Path("data/topik/processed/topik_reading_groups.json")
 
-INSTRUCTION_RANGE_RE = re.compile(
-    r"\[\s*(\d{1,2})\s*[～~\-–]\s*(\d{1,2})\s*\]"
-)
 QUESTION_PREFIX_RE = re.compile(r"^\s*([0-9Oo]{1,2})\s*[.．]")
 QUESTION_ONLY_RE = re.compile(r"^\s*([0-9Oo]{1,2})\s*$")
 
@@ -96,14 +98,10 @@ def locate_instruction_headers(blocks: list[dict]) -> list[dict]:
     headers: list[dict] = []
     seen_ranges: set[tuple[int, int]] = set()
     for index, block in enumerate(blocks):
-        match = INSTRUCTION_RANGE_RE.search(block["text"])
-        if match is None:
+        question_range = parse_instruction_range(block["text"])
+        if question_range is None:
             continue
-
-        question_start = int(match.group(1))
-        question_end = int(match.group(2))
-        if not (1 <= question_start <= question_end <= 50):
-            continue
+        question_start, question_end = question_range
 
         # EasyOCR can return the instruction and its [x~y] suffix as separate
         # boxes. Pull all same-row boxes into the instruction scope header.

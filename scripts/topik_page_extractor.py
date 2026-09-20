@@ -11,6 +11,11 @@ from typing import Any
 
 import pymupdf
 
+try:
+    from scripts.topik_ranges import parse_instruction_range
+except ModuleNotFoundError:  # Support direct script execution
+    from topik_ranges import parse_instruction_range
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OCR_CACHE_DIR = PROJECT_ROOT / "data/topik/processed/ocr_cache"
@@ -18,9 +23,6 @@ OCR_MODEL_DIR = PROJECT_ROOT / "data/topik/ocr_models"
 OCR_DPI = 200
 OCR_ENGINE = "easyocr-1.7.2"
 
-INSTRUCTION_RANGE_RE = re.compile(
-    r"\[\s*(\d{1,2})\s*[～~\-–]\s*(\d{1,2})\s*\]"
-)
 QUESTION_ANCHOR_RE = re.compile(r"^\s*([0-9Oo]{1,2})\s*[.．]")
 
 
@@ -58,11 +60,9 @@ def assess_native_structure(records: list[dict]) -> dict:
     for record in records:
         for line in record.get("lines") or []:
             text = str(line.get("text", ""))
-            match = INSTRUCTION_RANGE_RE.search(text)
-            if match is not None:
-                start, end = int(match.group(1)), int(match.group(2))
-                if 1 <= start <= end <= 50:
-                    ranges.append((start, end))
+            question_range = parse_instruction_range(text)
+            if question_range is not None:
+                ranges.append(question_range)
             anchor = _question_anchor(text)
             if anchor is not None:
                 anchors.append(anchor)

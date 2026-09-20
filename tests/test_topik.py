@@ -16,6 +16,7 @@ from scripts.generate_topik_crop_metadata import (
     refine_visual_preview_regions,
 )
 from scripts.parse_topik_groups import parse_exam
+from scripts.topik_ranges import parse_instruction_range
 from scripts.topik_page_extractor import (
     assess_native_structure,
     choose_auto_extraction,
@@ -56,6 +57,34 @@ def make_native_candidate(lines):
 
 
 class TopikStructuralParserTests(TestCase):
+    def test_instruction_range_normalizes_narrow_ocr_corruption(self):
+        cases = {
+            "[I6;~18]": (16, 18),
+            "[4C;~47]": (46, 47),
+            "[19-~20]": (19, 20),
+            "[23-~24]": (23, 24),
+            "[16~18]": (16, 18),
+            "[1～2]": (1, 2),
+            "[9-12]": (9, 12),
+        }
+
+        for text, expected in cases.items():
+            with self.subTest(text=text):
+                self.assertEqual(parse_instruction_range(text), expected)
+
+    def test_instruction_range_rejects_invalid_or_ambiguous_candidates(self):
+        cases = (
+            "I6;~18",
+            "[16 18]",
+            "[49~4C]",
+            "[5C~60]",
+            "[16~18] and [19~20]",
+        )
+
+        for text in cases:
+            with self.subTest(text=text):
+                self.assertIsNone(parse_instruction_range(text))
+
     def test_instruction_scope_produces_one_independent_unit_per_question(self):
         records = [
             make_page(
@@ -322,6 +351,42 @@ class TopikStructuralParserTests(TestCase):
         self.assertEqual(inferred[19][0], 1)
         self.assertGreater(inferred[19][1], 180.0)
         self.assertLess(inferred[19][1], 260.0)
+
+    def test_trailing_shared_sibling_prefers_strong_local_gap_over_page_transition(self):
+        blocks = [
+            {"order": 0, "page": 1, "bbox": [50, 140, 500, 180]},
+            {"order": 1, "page": 1, "bbox": [50, 260, 70, 275]},
+            {"order": 2, "page": 1, "bbox": [50, 290, 500, 305]},
+            {"order": 3, "page": 1, "bbox": [50, 400, 500, 415]},
+            {"order": 4, "page": 1, "bbox": [50, 430, 500, 445]},
+            {"order": 5, "page": 2, "bbox": [50, 45, 500, 60]},
+        ]
+        scope = {
+            "structure_type": "shared_context",
+            "question_numbers": [31, 32],
+            "blocks": blocks,
+            "shared_context_blocks": blocks[:1],
+            "question_anchors": [
+                {
+                    "question_number": 31,
+                    "block_order": 1,
+                    "page": 1,
+                    "bbox": [50, 260, 70, 275],
+                }
+            ],
+        }
+        doc = pymupdf.open()
+        doc.new_page(width=595, height=842)
+        doc.new_page(width=595, height=842)
+        try:
+            inferred = infer_shared_visual_starts(scope, doc)
+        finally:
+            doc.close()
+
+        self.assertEqual(set(inferred), {32})
+        self.assertEqual(inferred[32][0], 1)
+        self.assertGreater(inferred[32][1], 305.0)
+        self.assertLess(inferred[32][1], 400.0)
 
     def test_shared_preview_separates_context_from_target_question(self):
         scope = {

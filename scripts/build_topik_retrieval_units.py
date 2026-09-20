@@ -9,6 +9,7 @@ from pathlib import Path
 INPUT_FILE = Path("data/topik/processed/topik_reading_groups.json")
 OUTPUT_FILE = Path("data/topik/processed/topik_retrieval_units.json")
 CONTEXTS_FILE = Path("data/topik/processed/topik_shared_contexts.json")
+MIN_LAYOUT_GAP = 18.0
 
 
 def join_blocks(blocks: list[dict]) -> str:
@@ -73,10 +74,12 @@ def _layout_gap_candidates(
         if following_order >= end_order:
             continue
         if int(current["page"]) != int(following["page"]):
-            candidates.append((1000.0, following_order))
+            # Keep a page transition as a fallback without letting its
+            # synthetic score outrank a strong same-page sibling boundary.
+            candidates.append((MIN_LAYOUT_GAP, following_order))
             continue
         gap = float(following["bbox"][1]) - float(current["bbox"][3])
-        if gap >= 18.0:
+        if gap >= MIN_LAYOUT_GAP:
             candidates.append((gap, following_order))
     return candidates
 
